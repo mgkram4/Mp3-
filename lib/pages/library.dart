@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:mp3_app/services/firestore.dart';
+import 'package:path/path.dart' as path;
 import 'package:rxdart/rxdart.dart';
+import 'package:share_plus/share_plus.dart';
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({Key? key}) : super(key: key);
@@ -95,6 +97,38 @@ class _LibraryPageState extends State<LibraryPage> {
     }
   }
 
+  Future<void> _deleteSong(int index) async {
+    final song = _songs[index];
+    final bool success = await _storageService.deleteFile(song['url']);
+    if (success) {
+      setState(() {
+        _songs.removeAt(index);
+      });
+      if (_currentlyPlayingIndex == index) {
+        await _audioPlayer.stop();
+        _currentlyPlayingIndex = null;
+      } else if (_currentlyPlayingIndex != null &&
+          _currentlyPlayingIndex! > index) {
+        _currentlyPlayingIndex = _currentlyPlayingIndex! - 1;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Song deleted successfully')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete song')),
+      );
+    }
+  }
+
+  Future<void> _shareSong(int index) async {
+    final song = _songs[index];
+    final String fileName = path.basename(song['url']);
+    await Share.share(
+        'Check out this song: ${song['title']} by ${song['artist']}',
+        subject: 'Sharing $fileName');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,11 +160,24 @@ class _LibraryPageState extends State<LibraryPage> {
                           title: Text(song['title'],
                               style: TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text(song['artist']),
-                          trailing: IconButton(
-                            icon: Icon(
-                                isPlaying ? Icons.pause : Icons.play_arrow,
-                                color: Colors.deepPurple),
-                            onPressed: () => _playSong(index),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _deleteSong(index),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.share, color: Colors.blue),
+                                onPressed: () => _shareSong(index),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                    isPlaying ? Icons.pause : Icons.play_arrow,
+                                    color: Colors.deepPurple),
+                                onPressed: () => _playSong(index),
+                              ),
+                            ],
                           ),
                         ),
                       );

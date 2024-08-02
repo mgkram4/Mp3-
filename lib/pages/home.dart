@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:mp3_app/services/auth.dart';
 import 'package:mp3_app/services/firestore.dart';
 
 class HomePage extends StatefulWidget {
@@ -15,6 +16,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final FirebaseStorageService _storageService = FirebaseStorageService();
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final AuthService _authService = AuthService();
   List<Map<String, dynamic>> _recentSongs = [];
   int? _currentlyPlayingIndex;
 
@@ -63,6 +65,20 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _signOut() async {
+    try {
+      await _authService.signOut();
+      // Navigate to login screen or handle sign out as needed
+      // For example:
+      // Navigator.of(context).pushReplacementNamed('/login');
+    } catch (e) {
+      print('Error signing out: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error signing out: $e')),
+      );
+    }
+  }
+
   Future<void> _playSong(int index) async {
     try {
       if (_currentlyPlayingIndex == index) {
@@ -93,6 +109,13 @@ class _HomePageState extends State<HomePage> {
         title: const Text('My Music'),
         backgroundColor: Colors.deepPurple,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            onPressed: _signOut,
+            tooltip: 'Sign Out',
+          ),
+        ],
       ),
       body: Column(
         children: [

@@ -1,0 +1,7 @@
+<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+</dict>
+
+<uses-permission android:name="android.permission.INTERNET"/>
